@@ -2,60 +2,68 @@ const holes = document.querySelectorAll('.hole');
 const scoreBoard = document.querySelector('.score');
 const moles = document.querySelectorAll('.mole');
 const start = document.querySelector('.start');
-let lastHole;
+
 let timeUp;
 let score = 0;
-let arr = [];
 
-function randomTime(min, max) {
-  return Math.random() * (max - min) + min;
-}
+const getRandomNumber = (min, max) => {
+  return Math.floor(Math.random() * (max - min) + min);
+};
 
-function randomHole(holes) {
-  const idx = Math.floor(Math.random() * holes.length);
+const getRandomeHole = () => {
+  let lastHole;
+  const idx = getRandomNumber(0, holes.length);
   const hole = holes[idx];
 
   if (hole === lastHole) {
-    return randomHole(holes);
+    return getRandomeHole(holes);
   }
   lastHole = hole;
   return hole;
-}
+};
 
-function peep() {
-  const time = randomTime(400, 1000);
-  const hole = randomHole(holes);
-  hole.classList.add('up');
+const moleUp = () => {
+  const time = getRandomNumber(400, 1000);
+  const hole = getRandomeHole();
+  hole.classList.toggle('up');
   setTimeout(() => {
-    hole.classList.remove('up');
-    if (!timeUp) peep();
+    hole.classList.toggle('up');
+    if (!timeUp) moleUp();
   }, time);
-}
+};
 
-function countScore() {
+// По условию задачи, сохраняем значения в localStore
+const saveScore = () => {
+  let arr = [];
   arr = JSON.parse(localStorage.getItem('arr')) || [];
   arr.push(score);
   localStorage.setItem('arr', JSON.stringify(arr));
-}
+};
 
-function startGame() {
-  scoreBoard.textContent = 0;
+const startGame = () => {
+  let scoreReset = 0;
+  const gameTime = 10000;
+  scoreBoard.textContent = scoreReset;
+  score = scoreReset;
   timeUp = false;
-
-  score = 0;
-  peep();
+  moleUp();
   setTimeout(() => {
-    (timeUp = true), countScore();
-	}, 10000);
-	start.textContent = 'Restart'
-}
+    timeUp = true;
+    saveScore();
+  }, gameTime);
+  start.textContent = 'Restart';
+};
 
-function bonk(e) {
-  if (!e.isTrusted) return;
-  score++;
-  this.classList.remove('up');
-  scoreBoard.textContent = score;
-}
+const bonk = () => {
+  const gameBlock = document.querySelector('.game');
+  gameBlock.addEventListener('click', (event) => {
+    if (event.target.classList.contains('mole')) {
+      score++;
+      scoreBoard.textContent = score;
+    }
+  });
+};
 
-moles.forEach((mole) => mole.addEventListener('click', bonk));
+bonk();
+
 start.addEventListener('click', startGame);
